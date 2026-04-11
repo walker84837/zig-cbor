@@ -1,6 +1,7 @@
 const std = @import("std");
+const io = std.io;
 
-pub const Error = error{
+pub const Error = io.Writer.Error || error{
     StringTooLong,
     IntegerTooLarge,
     InvalidValue,
@@ -46,7 +47,7 @@ pub const CborValue = union(enum) {
         return .{ .Object = value };
     }
 
-    pub fn serialize(self: Self, writer: anytype) Error!void {
+    pub fn serialize(self: Self, writer: *io.Writer) Error!void {
         switch (self) {
             .Null => try writer.writeByte(0xF6),
             .Boolean => |b| try writer.writeByte(if (b) 0xF5 else 0xF4),
@@ -94,7 +95,7 @@ pub const ObjectMap = struct {
         return new_map;
     }
 
-    pub fn serialize(self: Self, writer: anytype) Error!void {
+    pub fn serialize(self: Self, writer: *io.Writer) Error!void {
         const size = @as(u8, @intCast(self.map.count()));
         try writer.writeByte(0xA0 | size);
 
@@ -119,14 +120,14 @@ pub const ObjectMap = struct {
     }
 };
 
-fn writeU16BigEndian(writer: anytype, value: u16) !void {
+fn writeU16BigEndian(writer: *io.Writer, value: u16) !void {
     const high_byte: u8 = @truncate(value >> 8);
     const low_byte: u8 = @truncate(value);
     try writer.writeByte(high_byte);
     try writer.writeByte(low_byte);
 }
 
-fn serializeInteger(value: i64, writer: anytype) Error!void {
+fn serializeInteger(value: i64, writer: *io.Writer) Error!void {
     if (value >= 0) {
         if (value <= 23) {
             try writer.writeByte(@intCast(value));
@@ -231,7 +232,7 @@ fn doubleToHalf(value: f64) u16 {
     return half;
 }
 
-fn serializeFloat(value: f64, writer: anytype) Error!void {
+fn serializeFloat(value: f64, writer: *io.Writer) Error!void {
     // Решаем, какой формат использовать
 
     // Проверяем каждое условие отдельно
@@ -259,7 +260,7 @@ fn serializeFloat(value: f64, writer: anytype) Error!void {
     }
 }
 
-fn serializeString(value: []const u8, writer: anytype) Error!void {
+fn serializeString(value: []const u8, writer: *io.Writer) Error!void {
     const len = value.len;
     if (len < 24) {
         try writer.writeByte(@as(u8, @intCast(0x60 | len)));
@@ -276,7 +277,7 @@ fn serializeString(value: []const u8, writer: anytype) Error!void {
     try writer.writeAll(value);
 }
 
-fn serializeArray(value: []const CborValue, writer: anytype) Error!void {
+fn serializeArray(value: []const CborValue, writer: *io.Writer) Error!void {
     const len = value.len;
     if (len < 24) {
         try writer.writeByte(@as(u8, @intCast(0x80 | len)));
