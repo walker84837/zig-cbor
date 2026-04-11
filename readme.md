@@ -1,24 +1,27 @@
-# CBOR Serializer in Zig
+# zig-cbor :zap:
 
-A lightweight and efficient CBOR (Concise Binary Object Representation) serializer implemented in Zig.
+> A RFC 8949 compliant CBOR (Concise Binary Object Representation) serializer/deserializer for Zig 0.15+.
 
-## Features
+## Features :sparkles:
 
-- Fast and compact serialization of data into CBOR format
-- Fully written in Zig for high performance and low memory usage
-- Supports encoding basic data types (integers, strings, arrays, maps, etc.)
-- Minimal dependencies
+- **Serialization** :arrow_right: Encode Zig values to CBOR bytes
+- **Deserialization** :arrow_left: Decode CBOR bytes to CborValue
+- **Streaming** :arrows_clockwise: Writer/Reader for incremental processing
+- **Validation Modes** :white_check_mark: well_formed, strict, deterministic
+- **Custom Allocators** :wrench: Pass your own allocator
+- **Heterogeneous Maps** :key: CborMap with any CBOR value as key
+- **Tag Support** :label: Tagged values with content validation
 
 ## Compatibility
 
-This library requires Zig version 0.15.2 or later. It has been tested with Zig 0.15.2.
+Requires Zig 0.15.2 or later.
 
 ## Installation
 
 You can add `zig-cbor` as a dependency to your project using `zig fetch`.
 
 ```sh
-zig fetch --save=cbor git+https://github.com/solenopsys/zig-cbor#main
+zig fetch --save=cbor git+https://github.com/walker84837/zig-cbor#main
 ```
 
 ### Add to `build.zig`
@@ -35,54 +38,85 @@ const cbor_module = cbor_dep.module("cbor");
 exe.root_module.addImport("cbor", cbor_module);
 ```
 
-## Building
-To build the library:
-```sh
-zig build
-```
+## Quick Start
 
-## Testing
-To run the tests:
-```sh
-zig build test
-```
+### Usage
 
-## Usage
+Import the library and use it in your Zig project:
 
-Import the serializer and use it in your Zig project:
 ```zig
 const std = @import("std");
 const cbor = @import("cbor");
-
-const CborValue = cbor.CborValue;
-const ObjectMap = cbor.ObjectMap;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    var obj = ObjectMap.init(allocator);
+    // Create a map with string keys
+    var obj = cbor.ObjectMap.init(allocator);
     defer obj.deinit();
 
-    try obj.put("message", CborValue.initString("Hello, CBOR!"));
-    try obj.put("number", CborValue.initInteger(42));
-    try obj.put("flag", CborValue.initBoolean(true));
+    try obj.put("message", cbor.CborValue.initString("Hello"));
+    try obj.put("count", cbor.CborValue.initInteger(42));
+    try obj.put("enabled", cbor.CborValue.initBoolean(true));
 
-    var buf = std.ArrayList(u8).init(allocator);
-    defer buf.deinit();
+    // Serialize to bytes
+    const encoded = try cbor.serialize(allocator, cbor.CborValue.initObject(obj), .{});
+    defer allocator.free(encoded);
 
-    try CborValue.initObject(&obj).serialize(buf.writer());
-    std.debug.print("Serialized CBOR: {any}\n", .{buf.items});
+    std.debug.print("Encoded: {x}\n", .{encoded});
+
+    // Deserialize back
+    const decoded = try cbor.deserialize(allocator, encoded, .well_formed);
+    std.debug.print("Decoded: {}\n", .{decoded});
 }
 ```
 
-## Roadmap
+### Streaming API
 
-- [ ] Support for floating-point numbers
-- [ ] CBOR decoding functionality
-- [ ] Support for custom data types
+```zig
+// Writer for incremental serialization
+var buffer: [256]u8 = undefined;
+var fbs = std.io.fixedBufferStream(&buffer);
+var w = cbor.makeWriter(fbs.writer());
 
-## License
+try w.map(2);
+try w.text("key");
+try w.text("value");
+
+// Reader for incremental deserialization
+var r = cbor.makeReader(fbs.reader(), allocator);
+const value = try r.read();
+```
+
+### Builder Patterns
+
+```zig
+const v = cbor.CborValue;
+
+const str = v.initString("hello");
+const num = v.initInteger(42);
+const flag = v.initBoolean(true);
+const nil = v.initNull();
+const undef = v.initUndefined();
+const flt = v.initFloat(3.14);
+const bin = v.initBytes(&[_]u8{1,2,3});
+const arr = v.initArray(&[_]cbor.CborValue{ v.initInteger(1), v.initInteger(2) });
+```
+
+## Testing :test_tube:
+
+```sh
+zig build test
+```
+
+## Building :hammer:
+
+```sh
+zig build # Build static library
+```
+
+## License :scroll:
 
 This project is licensed under the MIT License.
