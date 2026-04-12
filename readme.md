@@ -21,7 +21,7 @@ Requires Zig 0.15.2 or later.
 You can add `zig-cbor` as a dependency to your project using `zig fetch`.
 
 ```sh
-zig fetch --save=cbor git+https://github.com/walker84837/zig-cbor#main
+zig fetch --save=cbor git+https://github.com/walker84837/zig-cbor#master
 ```
 
 ### Add to `build.zig`
