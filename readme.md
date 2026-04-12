@@ -2,15 +2,15 @@
 
 > A RFC 8949 compliant CBOR (Concise Binary Object Representation) serializer/deserializer for Zig 0.15+.
 
-## Features :sparkles:
+## Features
 
-- **Serialization** :arrow_right: Encode Zig values to CBOR bytes
-- **Deserialization** :arrow_left: Decode CBOR bytes to CborValue
-- **Streaming** :arrows_clockwise: Writer/Reader for incremental processing
-- **Validation Modes** :white_check_mark: well_formed, strict, deterministic
-- **Custom Allocators** :wrench: Pass your own allocator
-- **Heterogeneous Maps** :key: CborMap with any CBOR value as key
-- **Tag Support** :label: Tagged values with content validation
+- :arrow_right: **Serialization** Encode Zig values to CBOR bytes
+- :arrow_left: **Deserialization** Decode CBOR bytes to CborValue
+- :arrows_clockwise: **Streaming** Writer/Reader for incremental processing
+- :white_check_mark: **Validation Modes** well_formed, strict, deterministic
+- :wrench: **Custom Allocators** Pass your own allocator
+- :key: **Heterogeneous Maps** CborMap with any CBOR value as key
+- :label: **Tag Support** Tagged values with content validation
 
 ## Compatibility
 
@@ -105,13 +105,13 @@ const bin = v.initBytes(&[_]u8{1,2,3});
 const arr = v.initArray(&[_]cbor.CborValue{ v.initInteger(1), v.initInteger(2) });
 ```
 
-## Testing :test_tube:
+## Testing
 
 ```sh
 zig build test
 ```
 
-## Building :hammer:
+## Building
 
 ```sh
 zig build # Build static library
